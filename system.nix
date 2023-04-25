@@ -62,19 +62,6 @@
     ];
   };
   
-  environment.etc."agd" = {
-    mode = "0555";
-    text = ''
-    #!/bin/sh
-    if [ -z "$1" ]; then
-      echo "Usage: $0 <filename>"
-      exit 1
-    fi
-    cd /home/chebuya/dev/nixos/secrets/
-    agenix -d "$@.age"
-    ''; 
-  };
-
   nixpkgs.config.allowUnfree = true;
   system.stateVersion = "22.11";
   services.xserver = {
@@ -97,10 +84,12 @@
   services.openssh = {
     enable = true;
     openFirewall = false;
-    listenAddresses = [ { addr = "100.111.59.12"; port = 22; } { addr = "127.0.0.1"; port = 22; } ];
+    listenAddresses = [ { addr = "100.77.100.24"; port = 22; } { addr = "127.0.0.1"; port = 22; } ];
   };
 
+  services.tailscale.enable = true;
   services.flatpak.enable = true;
+  
   programs.command-not-found.enable = false;
   programs.fish.promptInit = ''
     any-nix-shell fish --info-right | source
@@ -126,6 +115,19 @@
     allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
     allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
     checkReversePath = "loose";
+  };
+
+  systemd.services.syncthing = {
+    enable = true;
+    description = "syncthing";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="chebuya";
+    };
+    path = with pkgs; [ syncthing ];
+    script = ''syncthing'';
   };
 
   users.users.shadowsocks = {

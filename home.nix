@@ -37,16 +37,17 @@ in {
 #  ];
 
   home.packages = with pkgs; [
+    gocryptfs
     kitty
     any-nix-shell
     fish
     git
-    gnomeExtensions.clipboard-indicator
-    gnomeExtensions.unblank
-    gnomeExtensions.unite
-    gnomeExtensions.dash-to-dock
-    gnomeExtensions.appindicator
-    gnomeExtensions.gsconnect
+#    gnomeExtensions.clipboard-indicator
+#    gnomeExtensions.unblank
+#    gnomeExtensions.unite
+#    gnomeExtensions.dash-to-dock
+#    gnomeExtensions.appindicator
+#    gnomeExtensions.gsconnect
     python3
 #    grim
 #    ayu-theme-gtk
