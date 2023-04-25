@@ -22,6 +22,7 @@ in {
   nixpkgs.config.allowUnfree = true;
   home.username = "chebuya";
   home.stateVersion = "22.11";
+
   #services.picom.enable = true;
   #services.picom.vSync = true;
   
@@ -120,7 +121,7 @@ in {
       [
         "Exec=bash -c \"cat /home/chebuya/.pwd | keepassxc --pw-stdin /home/chebuya/Dropbox/Sync/passwords.kdbx\""
       ])
-#    (callPackage ./derivations/audiorelay {})
+   (callPackage ./derivations/audiorelay.nix {})
   ];
 
   programs.vscode = {
@@ -130,9 +131,6 @@ in {
       ms-vscode.cpptools
     ];
   };
-
-  programs.nix-index.enable = true;
-  programs.nix-index.enableFishIntegration = true;
 
   gtk = {
     enable = true;

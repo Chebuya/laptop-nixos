@@ -1,4 +1,12 @@
 { inputs, config, pkgs, lib, ...}: {
+  age.secrets.sssweden = {
+    file = ./secrets/sssweden.age;
+    owner = "chebuya";
+    group = "users";
+  };
+
+  age.identityPaths = [ "/home/chebuya/.ssh/id_ed25519" ];
+
   nix.settings.experimental-features = [ "flakes" "nix-command" ];
 
   boot.loader.systemd-boot.enable = true;
@@ -17,7 +25,13 @@
   i18n.defaultLocale = "en_GB.UTF-8";
 
   sound.enable = true;
-  hardware.pulseaudio.enable = true;
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+  };
+  hardware.pulseaudio.enable = false;
   security.rtkit.enable = true;
 
   users.users.chebuya = {
@@ -27,6 +41,19 @@
     packages = with pkgs; [
       firefox
     ];
+  };
+  
+  environment.etc."agd" = {
+    mode = "0555";
+    text = ''
+    #!/bin/sh
+    if [ -z "$1" ]; then
+      echo "Usage: $0 <filename>"
+      exit 1
+    fi
+    cd /home/chebuya/dev/nixos/secrets/
+    agenix -d "$@.age"
+    ''; 
   };
 
   nixpkgs.config.allowUnfree = true;
@@ -48,7 +75,14 @@
     '';
   };
 
-  services.flatpak.enable = true;          
+  services.openssh = {
+    enable = true;
+    openFirewall = false;
+    listenAddresses = [ { addr = "100.111.59.12"; port = 22; } { addr = "127.0.0.1"; port = 22; } ];
+  };
+
+  services.flatpak.enable = true;
+  programs.command-not-found.enable = false;
   programs.fish.promptInit = ''
     any-nix-shell fish --info-right | source
   '';
@@ -59,6 +93,8 @@
 
   environment.systemPackages = with pkgs; [
     pavucontrol
+    pasystray
+    inputs.agenix.packages.x86_64-linux.default 
   ];
 
   hardware.opengl.driSupport32Bit = true;
@@ -73,6 +109,19 @@
     checkReversePath = "loose";
   };
 
+  systemd.services.swedenshadowsocks = {
+    enable = false;
+    description = "Shadowsocks";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="chebuya";
+    };
+    #script = ''ss-local -s "dreamykafe.tech" -p 443 -l 1080 -b 0.0.0.0 -k $(cat "${config.age.secrets.sssweden.path}") -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;host=saltythunderingslugsached.dreamykafe.tech;path=/;loglevel=debug" -t 300 --reuse-port --fast-open'';
+    path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
+  
+  };
     
   services.nginx.enable = true;
 
