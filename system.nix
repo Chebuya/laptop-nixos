@@ -110,7 +110,7 @@
   };
 
   systemd.services.swedenshadowsocks = {
-    enable = false;
+    enable = true;
     description = "Shadowsocks";
     wantedBy = [ "multi-user.target" ];
     serviceConfig = {
@@ -118,7 +118,7 @@
       RestartSec = "5";
       User="chebuya";
     };
-    #script = ''ss-local -s "dreamykafe.tech" -p 443 -l 1080 -b 0.0.0.0 -k $(cat "${config.age.secrets.sssweden.path}") -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;host=saltythunderingslugsached.dreamykafe.tech;path=/;loglevel=debug" -t 300 --reuse-port --fast-open'';
+    script = ''ss-local -s "dreamykafe.tech" -p 443 -l 1080 -b 0.0.0.0 -k $(cat "${config.age.secrets.sssweden.path}") -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;host=saltythunderingslugsached.dreamykafe.tech;path=/;loglevel=debug" -t 300 --reuse-port --fast-open'';
     path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
   
   };
