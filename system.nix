@@ -1,29 +1,28 @@
-{ inputs, config, pkgs, lib, ...}: {
+{ inputs, config, pkgs, lib, ...}:
+{
   age.secrets.sssweden = {
     file = ./secrets/sssweden.age;
-    owner = "chebuya";
-    group = "users";
+    owner = "shadowsocks";
+    group = "shadowsocks";
   };
 
   age.secrets.cloudflarednginx = {
     file = ./secrets/cloudflarednginx.age;
-    owner = "chebuya";
-    group = "users";
+    owner = "cloudflared";
+    group = "cloudflared";
   };
 
   age.secrets.cloudflaredsyncthing = {
     file = ./secrets/cloudflaredsyncthing.age;
-    owner = "chebuya";
-    group = "users";
+    owner = "cloudflared";
+    group = "cloudflared";
   };
 
   age.secrets.cloudflaredssh = {
     file = ./secrets/cloudflaredssh.age;
-    owner = "chebuya";
-    group = "users";
+    owner = "cloudflared";
+    group = "cloudflared";
   };
-
-  cloudflaredsshtoken = ''$(cat "${config.age.secrets.cloudflaredssh.path}")'';
 
   age.identityPaths = [ "/home/chebuya/.ssh/id_ed25519" ];
 
@@ -115,7 +114,6 @@
     pavucontrol
     pasystray
     inputs.agenix.packages.x86_64-linux.default 
-    cloudflared
   ];
 
   hardware.opengl.driSupport32Bit = true;
@@ -130,6 +128,12 @@
     checkReversePath = "loose";
   };
 
+  users.users.shadowsocks = {
+    group = "shadowsocks";
+    isSystemUser = true;
+  };
+  users.groups.shadowsocks = {};
+
   systemd.services.swedenshadowsocks = {
     enable = true;
     description = "Shadowsocks";
@@ -137,9 +141,24 @@
     serviceConfig = {
       Restart = "always";
       RestartSec = "5";
-      User="chebuya";
+      User="shadowsocks";
+      Group="shadowsocks";
     };
-    script = ''ss-local -s "dreamykafe.tech" -p 443 -l 1080 -b 0.0.0.0 -k $(cat "${config.age.secrets.sssweden.path}") -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;host=saltythunderingslugsached.dreamykafe.tech;path=/;loglevel=debug" -t 300 --reuse-port --fast-open'';
+    script = ''
+     password=$(cat "${config.age.secrets.sssweden.path}") 
+     ss-local \
+        -s "dreamykafe.tech" \
+        -p 443 \
+        -l 1080 \
+        -b 0.0.0.0 \
+        -k $password \
+        -m "xchacha20-ietf-poly1305" \
+        --plugin "v2ray-plugin" \
+        --plugin-opts "tls;host=saltythunderingslugsached.dreamykafe.tech;path=/;loglevel=debug" \ 
+        -t 300 \
+        --reuse-port \
+        --fast-open
+    '';
     path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
   };
 
@@ -147,7 +166,7 @@
     group = "cloudflared";
     isSystemUser = true;
   };
-  users.groups.cloudflared = { };
+  users.groups.cloudflared = {};
 
   systemd.services.ssh_tunnel = {
     wantedBy = [ "multi-user.target" ];
@@ -156,10 +175,14 @@
     serviceConfig = {
       Restart = "always";
       RestartSec = 10;
-      User = "chebuya";
-      #Group = -"cloudflared";
+      User = "cloudflared";
+      Group = "cloudflared";
     };
-    script = ''cloudflared tunnel --no-autoupdate run --token=${cloudflaredsshtoken}'';
+    script = ''
+     token=$(cat ${config.age.secrets.cloudflaredssh.path})
+     cloudflared tunnel --no-autoupdate run --token=$token
+    '';
+    path = with pkgs; [ cloudflared ]; 
   };
 
   systemd.services.syncthing_tunnel = {
@@ -172,7 +195,11 @@
       User = "cloudflared";
       Group = "cloudflared";
     };
-    script = ''cloudflared tunnel --no-autoupdate run --token=$(cat ${config.age.secrets.cloudflaredsyncthing.path});'';
+    script = ''
+     token=$(cat ${config.age.secrets.cloudflaredsyncthing.path})
+     cloudflared tunnel --no-autoupdate run --token=$token
+    '';
+    path = with pkgs; [ cloudflared ]; 
   };
 
   systemd.services.nginx_tunnel = {
@@ -185,9 +212,13 @@
       User = "cloudflared";
       Group = "cloudflared";
     };
-    script = ''cloudflared tunnel --no-autoupdate run --token=$(cat "${config.age.secrets.cloudflarednginx.path}");'';
+    script = ''
+     token=$(cat ${config.age.secrets.cloudflarednginx.path})
+     cloudflared tunnel --no-autoupdate run --token=$token
+    '';
+    path = with pkgs; [ cloudflared ]; 
   };
-    
+
   services.nginx.enable = true;
 
   services.nginx.virtualHosts."_" = {
