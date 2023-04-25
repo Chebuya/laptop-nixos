@@ -5,6 +5,26 @@
     group = "users";
   };
 
+  age.secrets.cloudflarednginx = {
+    file = ./secrets/cloudflarednginx.age;
+    owner = "chebuya";
+    group = "users";
+  };
+
+  age.secrets.cloudflaredsyncthing = {
+    file = ./secrets/cloudflaredsyncthing.age;
+    owner = "chebuya";
+    group = "users";
+  };
+
+  age.secrets.cloudflaredssh = {
+    file = ./secrets/cloudflaredssh.age;
+    owner = "chebuya";
+    group = "users";
+  };
+
+  cloudflaredsshtoken = ''$(cat "${config.age.secrets.cloudflaredssh.path}")'';
+
   age.identityPaths = [ "/home/chebuya/.ssh/id_ed25519" ];
 
   nix.settings.experimental-features = [ "flakes" "nix-command" ];
@@ -95,6 +115,7 @@
     pavucontrol
     pasystray
     inputs.agenix.packages.x86_64-linux.default 
+    cloudflared
   ];
 
   hardware.opengl.driSupport32Bit = true;
@@ -120,7 +141,51 @@
     };
     script = ''ss-local -s "dreamykafe.tech" -p 443 -l 1080 -b 0.0.0.0 -k $(cat "${config.age.secrets.sssweden.path}") -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;host=saltythunderingslugsached.dreamykafe.tech;path=/;loglevel=debug" -t 300 --reuse-port --fast-open'';
     path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
-  
+  };
+
+  users.users.cloudflared = {
+    group = "cloudflared";
+    isSystemUser = true;
+  };
+  users.groups.cloudflared = { };
+
+  systemd.services.ssh_tunnel = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = 10;
+      User = "chebuya";
+      #Group = -"cloudflared";
+    };
+    script = ''cloudflared tunnel --no-autoupdate run --token=${cloudflaredsshtoken}'';
+  };
+
+  systemd.services.syncthing_tunnel = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = 10;
+      User = "cloudflared";
+      Group = "cloudflared";
+    };
+    script = ''cloudflared tunnel --no-autoupdate run --token=$(cat ${config.age.secrets.cloudflaredsyncthing.path});'';
+  };
+
+  systemd.services.nginx_tunnel = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = 10;
+      User = "cloudflared";
+      Group = "cloudflared";
+    };
+    script = ''cloudflared tunnel --no-autoupdate run --token=$(cat "${config.age.secrets.cloudflarednginx.path}");'';
   };
     
   services.nginx.enable = true;
