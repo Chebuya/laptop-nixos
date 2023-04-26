@@ -24,6 +24,12 @@
     group = "cloudflared";
   };
 
+  age.secrets.cloudflaredqbit = {
+    file = ./secrets/cloudflaredqbit.age;
+    owner = "cloudflared";
+    group = "cloudflared";
+  };
+
   age.identityPaths = [ "/home/chebuya/.ssh/id_ed25519" ];
 
   nix.settings.experimental-features = [ "flakes" "nix-command" ];
@@ -101,6 +107,7 @@
 
   environment.systemPackages = with pkgs; [
     pavucontrol
+    qbittorrent-nox
     pasystray
     inputs.agenix.packages.x86_64-linux.default 
   ];
@@ -219,6 +226,46 @@
      cloudflared tunnel --no-autoupdate run --token=$token
     '';
     path = with pkgs; [ cloudflared ]; 
+  };
+
+  systemd.services.qbit_tunnel = {
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = 10;
+      User = "cloudflared";
+      Group = "cloudflared";
+    };
+    script = ''
+     token=$(cat ${config.age.secrets.cloudflaredqbit.path})
+     cloudflared tunnel --no-autoupdate run --token=$token
+    '';
+    path = with pkgs; [ cloudflared ]; 
+  };
+
+  users.users.qbit = {
+    group = "qbit";
+    isSystemUser = true;
+    home = "/var/lib/qbittorrent-nox";
+    createHome = true;
+  };
+  users.groups.qbit = {};
+  
+  systemd.services.qbitnox = {
+    enable = true;
+    description = "qbittorrent";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="qbit";
+      Group="qbit";
+      WorkingDirectory="/var/lib/qbittorrent-nox";
+    };
+    path = with pkgs; [ qbittorrent-nox ];
+    script = ''qbittorrent-nox'';
   };
 
   services.nginx.enable = true;
