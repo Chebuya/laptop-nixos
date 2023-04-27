@@ -8,4 +8,5 @@ in {
   "cloudflarednginx.age".publicKeys = [ chebuya ];
   "cloudflaredssh.age".publicKeys = [ chebuya ];
   "cloudflaredqbit.age".publicKeys = [ chebuya ];
+  "precise.age".publicKeys = [ chebuya ];
 }

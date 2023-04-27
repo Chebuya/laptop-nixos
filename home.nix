@@ -37,6 +37,12 @@ in {
 #  ];
 
   home.packages = with pkgs; [
+    cloudflared
+    htop
+    killall
+    lsof
+    dnsutils
+    inetutils
     gocryptfs
     kitty
     any-nix-shell
@@ -78,7 +84,6 @@ in {
     util-linux
 #    waybar
     prismlauncher
-    qbittorrent
     lutris
     steam-run
     android-studio
@@ -114,14 +119,6 @@ in {
     xdg-utils
     discord
     tdesktop
-    keepassxc
-      (patchDesktop keepassxc "org.keepassxc.KeePassXC"
-      [
-        "Exec=keepassxc %f"
-      ]
-      [
-        "Exec=bash -c \"cat /home/chebuya/.pwd | keepassxc --pw-stdin /home/chebuya/Dropbox/Sync/passwords.kdbx\""
-      ])
    (callPackage ./derivations/audiorelay.nix {})
   ];
 
@@ -131,6 +128,15 @@ in {
     extensions = with pkgs.vscode-extensions; [
       ms-vscode.cpptools
     ];
+  };
+
+  xdg.desktopEntries = {
+    keepassxc = {
+      name = "KeePassXC";
+      icon = "keepassxc";
+      exec = ''sh -c "cat /run/agenix/precise | ${pkgs.keepassxc}/bin/keepassxc --pw-stdin /home/chebuya/Dropbox/Sync/passwords.kdbx"'';
+      type = "Application";
+    };
   };
 
   gtk = {

@@ -32,8 +32,8 @@
 
   age.secrets.cloudflaredqbit = {
     file = ./secrets/cloudflaredqbit.age;
-    owner = "cloudflared";
-    group = "cloudflared";
+    owner = "chebuya";
+    group = "users";
   };
 
   age.secrets.precise = {
@@ -59,7 +59,6 @@
     networkmanager.dns = "none";
     hostName = "laptop";
     networkmanager.enable = true;
-    interfaces."wlp1s0".proxyARP = true;
   };
 
   time.timeZone = "Europe/Moscow";
@@ -134,12 +133,12 @@
   xdg.portal.enable = true;
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
-  environment.etc."fuckwg" = {
+  environment.etc."fuckingtweaks" = {
     mode = "0555";
     text = ''
       #!/bin/sh
-      sudo ip rule del fwmark 100 table 100
-      sudo ip rule add fwmark 100 table 100
+      cat /run/agenix/precise | keepassxc /home/chebuya/Dropbox/Sync/passwords.kdbx --pw-stdin
+      firejail --net=wlp1s0 --noprofile sh -c "${pkgs.cloudflared}/bin/cloudflared tunnel --no-autoupdate run --token=$(cat /run/agenix/cloudflaredqbit) & ${pkgs.qbittorrent}/bin/qbittorrent"     
     '';
   };
 
@@ -196,65 +195,6 @@
     path = with pkgs; [ syncthing ];
     script = ''syncthing'';
   };
-
-  users.users.qbit = {
-    group = "users";
-    isSystemUser = true;
-    createHome = true;
-    home = "/var/lib/qbit";
-  };
-
-  systemd.services.defaultgateway = {
-    enable = false;
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Type="oneshot";
-      RemainAfterExit="true";
-    };
-    script = ''
-      NETNS="/var/run/netns/netns0"
-      if [ -f "$NETNS" ]; then
-        echo "netns0 exists"
-      else
-        echo "creating netns0..."
-        ip netns add netns0
-        ip link add veth0 type veth peer name veth1
-        ip link set veth1 netns netns0
-        ip addr add 10.0.0.1/24 dev veth0
-        ip link set veth0 up
-        ip netns exec netns0 ip addr add 10.0.0.2/24 dev veth1
-        ip netns exec netns0 ip link set veth1 up
-        ip netns exec netns0 ip route add default via 10.0.0.1
-        sysctl -w net.ipv4.ip_forward=1
-        iptables -t nat -A POSTROUTING -o wlp1s0 -j MASQUERADE
-        ip rule add fwmark 100 table 100 
-        ip rule add from 10.0.0.2 table 100
-        ip netns exec netns0 iptables -t mangle -A OUTPUT -o veth0 -j MARK --set-mark 100
-        ip route add default via 192.168.50.1 dev wlp1s0 table 100
-        echo "netns0 created"
-      fi
-    '';
-    path = with pkgs; [ iproute2 sysctl iptables];
-  };
-
-  systemd.services.qbitnox = {
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "defaultgateway.service" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = 10;
-      User = "qbit";
-      Group = "users";
-#      PrivateNetwork = true;
-#      NetworkNamespacePath = "/var/run/netns/netns0";
-    };
-    script = '' 
-      ${pkgs.qbittorrent-nox}/bin/qbittorrent-nox
-    '';
-  };    
 
   users.users.shadowsocks = {
     group = "shadowsocks";
@@ -370,23 +310,6 @@
     };
     script = ''
      token=$(cat ${config.age.secrets.cloudflarednginx.path})
-     cloudflared tunnel --no-autoupdate run --token=$token
-    '';
-    path = with pkgs; [ cloudflared ]; 
-  };
-
-  systemd.services.qbit_tunnel = {
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = 10;
-      User = "cloudflared";
-      Group = "cloudflared";
-    };
-    script = ''
-     token=$(cat ${config.age.secrets.cloudflaredqbit.path})
      cloudflared tunnel --no-autoupdate run --token=$token
     '';
     path = with pkgs; [ cloudflared ]; 
