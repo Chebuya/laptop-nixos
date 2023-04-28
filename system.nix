@@ -79,9 +79,6 @@
     isNormalUser = true;
     description = "Chebuya";
     extraGroups = [ "networkmanager" "wheel" "audio" ];
-    packages = with pkgs; [
-      firefox
-    ];
   };
   
   nixpkgs.config.allowUnfree = true;
@@ -116,10 +113,8 @@
     listenAddresses = [ { addr = "100.77.100.24"; port = 22; } { addr = "127.0.0.1"; port = 22; } ];
   };
 
-  services.haste-server = {
-    enable = true;
-  };
-
+  services.haste-server.enable = true;
+  services.rsyslogd.enable = true;
   services.tailscale.enable = true;
   services.flatpak.enable = true;
   programs.firejail.enable = true; 
@@ -132,17 +127,14 @@
   xdg.portal.enable = true;
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
-  environment.etc."fuckwg" = {
-    mode = "0555";
-    text = ''
-      #!/bin/sh
-      sudo ip rule del fwmark 100 table 100
-      sudo ip rule add fwmark 100 table 100
-    '';
-  };
-
   environment.systemPackages = with pkgs; [
     firejail
+    xfce.xfce4-weather-plugin
+    xfce.xfce4-mailwatch-plugin
+    xfce.thunar-dropbox-plugin
+    xfce.thunar-archive-plugin
+    xfce.xfce4-xkb-plugin
+    xfce.xfce4-clipman-plugin
     traceroute
     pavucontrol
     pasystray
@@ -182,6 +174,18 @@
     StateDirectory = "dnscrypt-proxy";
   };
 
+  systemd.services.ttyd.script = lib.mkForce ''
+    ${pkgs.ttyd}/bin/ttyd \
+      --port 7681 \
+      --interface lo \
+      --client-option enableZmodem=true \
+      --client-option enableSixel=true \
+      --client-option 'theme={"background": "#171717", "black": "#3F3F3F", "red": "#705050", "green": "#60B48A", "yellow": "#DFAF8F", "blue": "#9AB8D7", "magenta": "#DC8CC3", "cyan": "#8CD0D3", "white": "#DCDCCC", "brightBlack": "#709080", "brightRed": "#DCA3A3", "brightGreen": "#72D5A3", "brightYellow": "#F0DFAF", "brightBlue": "#94BFF3", "brightMagenta": "#EC93D3", "brightCyan": "#93E0E3", "brightWhite": "#FFFFFF"}' \
+      ${pkgs.shadow}/bin/login
+  '';
+
+  services.ttyd.enable = true;
+
   systemd.services.syncthing = {
     enable = true;
     description = "syncthing";
@@ -202,41 +206,6 @@
     home = "/var/lib/qbit";
   };
 
-  systemd.services.defaultgateway = {
-    enable = false;
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Type="oneshot";
-      RemainAfterExit="true";
-    };
-    script = ''
-      NETNS="/var/run/netns/netns0"
-      if [ -f "$NETNS" ]; then
-        echo "netns0 exists"
-      else
-        echo "creating netns0..."
-        ip netns add netns0
-        ip link add veth0 type veth peer name veth1
-        ip link set veth1 netns netns0
-        ip addr add 10.0.0.1/24 dev veth0
-        ip link set veth0 up
-        ip netns exec netns0 ip addr add 10.0.0.2/24 dev veth1
-        ip netns exec netns0 ip link set veth1 up
-        ip netns exec netns0 ip route add default via 10.0.0.1
-        sysctl -w net.ipv4.ip_forward=1
-        iptables -t nat -A POSTROUTING -o wlp1s0 -j MASQUERADE
-        ip rule add fwmark 100 table 100 
-        ip rule add from 10.0.0.2 table 100
-        ip netns exec netns0 iptables -t mangle -A OUTPUT -o veth0 -j MARK --set-mark 100
-        ip route add default via 192.168.50.1 dev wlp1s0 table 100
-        echo "netns0 created"
-      fi
-    '';
-    path = with pkgs; [ iproute2 sysctl iptables];
-  };
-
   systemd.services.qbitnox = {
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
@@ -246,8 +215,6 @@
       RestartSec = 10;
       User = "qbit";
       Group = "users";
-#      PrivateNetwork = true;
-#      NetworkNamespacePath = "/var/run/netns/netns0";
     };
     script = '' 
       ${pkgs.qbittorrent-nox}/bin/qbittorrent-nox
@@ -396,13 +363,28 @@
   services.nginx.virtualHosts."__" = {
     forceSSL = false;
     listen = [{port = 8082;  addr="127.0.0.1"; ssl=false;}];
-    locations."/syncthing".extraConfig = ''
+    locations."/".extraConfig = ''
+      proxy_redirect off;
+      proxy_pass http://localhost:7681;
+      proxy_set_header Host $host;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    '';
+    locations."/syncthing/".extraConfig = ''
       proxy_set_header        Host localhost;
-      proxy_set_header        Referer  http://syncthing:8384;
+      proxy_set_header        Referer  http://localhost:8384;
       proxy_set_header        X-Real-IP $remote_addr;
       proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header        X-Forwarded-Proto $scheme;
       proxy_pass              http://localhost:8384/;
+      add_header X-Content-Type-Options "nosniff";
+    '';
+    locations."/qbittorrent/".extraConfig = ''
+      proxy_set_header        Host $host;
+      proxy_set_header        X-Real-IP $remote_addr;
+      proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header        X-Forwarded-Proto $scheme;
+      proxy_pass              http://localhost:4780/;
       add_header X-Content-Type-Options "nosniff";
     '';
   };

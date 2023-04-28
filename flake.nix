@@ -4,9 +4,10 @@
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     agenix.url = "github:ryantm/agenix";
+    firefox-nightly = "github:colemickens/flake-firefox-nightly";
   };
 
-  outputs = inputs @ { nixpkgs, agenix, home-manager, ... }: {
+  outputs = inputs @ { nixpkgs, firefox-nightly, agenix, home-manager, ... }: {
     nixosConfigurations.laptop = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       specialArgs = { inherit inputs; };

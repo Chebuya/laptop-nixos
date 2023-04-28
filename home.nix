@@ -37,6 +37,9 @@ in {
 #  ];
 
   home.packages = with pkgs; [
+    imagemagick
+    glances
+    nmap
     cloudflared
     htop
     killall
@@ -92,11 +95,12 @@ in {
 #    mailspring
     gnome.zenity
     libreoffice
+    lrzsz
     chromium
     syncthingtray
     inkscape
     obs-studio
-    firefox
+    inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
     openjdk17
     distrobox
     rustup
