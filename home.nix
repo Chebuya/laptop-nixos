@@ -100,7 +100,6 @@ in {
     syncthingtray
     inkscape
     obs-studio
-    inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
     openjdk17
     distrobox
     rustup
@@ -121,9 +120,9 @@ in {
     gnome.geary
     gnome.gnome-boxes
     xdg-utils
-    discord
-    tdesktop
-   (callPackage ./derivations/audiorelay.nix {})
+    discord-canary
+    #tdesktop
+    (callPackage ./derivations/audiorelay.nix {})
   ];
 
   programs.vscode = {

@@ -1,4 +1,4 @@
-{ inputs, config, pkgs, lib, ...}:
+{ stable, inputs, config, pkgs, lib, ...}:
 {
   age.secrets.sssweden = {
     file = ./secrets/sssweden.age;
@@ -138,8 +138,10 @@
     traceroute
     pavucontrol
     pasystray
+    stable.tdesktop
     inputs.agenix.packages.x86_64-linux.default 
-  ];
+    inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
+   ];
 
   hardware.opengl.driSupport32Bit = true;
   programs.steam.enable = true;
