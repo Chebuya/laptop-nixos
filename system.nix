@@ -18,20 +18,14 @@
     group = "cloudflared";
   };
 
-  age.secrets.cloudflaredsyncthing = {
-    file = ./secrets/cloudflaredsyncthing.age;
+  age.secrets.cloudflaredinternal = {
+    file = ./secrets/cloudflaredinternal.age;
     owner = "cloudflared";
     group = "cloudflared";
   };
 
   age.secrets.cloudflaredssh = {
     file = ./secrets/cloudflaredssh.age;
-    owner = "cloudflared";
-    group = "cloudflared";
-  };
-
-  age.secrets.cloudflaredqbit = {
-    file = ./secrets/cloudflaredqbit.age;
     owner = "cloudflared";
     group = "cloudflared";
   };
@@ -122,6 +116,10 @@
     listenAddresses = [ { addr = "100.77.100.24"; port = 22; } { addr = "127.0.0.1"; port = 22; } ];
   };
 
+  services.haste-server = {
+    enable = true;
+  };
+
   services.tailscale.enable = true;
   services.flatpak.enable = true;
   programs.firejail.enable = true; 
@@ -156,7 +154,7 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 8081 59100 34844 8888 ];
+    allowedTCPPorts = [ 8081 59100 34844 8888 4780 ];
     allowedUDPPorts = [ 61385 59100 59200 64083 8888 ];
     allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
     allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
@@ -341,7 +339,7 @@
     path = with pkgs; [ cloudflared ]; 
   };
 
-  systemd.services.syncthing_tunnel = {
+  systemd.services.internal_tunnel = {
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
@@ -352,7 +350,7 @@
       Group = "cloudflared";
     };
     script = ''
-     token=$(cat ${config.age.secrets.cloudflaredsyncthing.path})
+     token=$(cat ${config.age.secrets.cloudflaredinternal.path})
      cloudflared tunnel --no-autoupdate run --token=$token
     '';
     path = with pkgs; [ cloudflared ]; 
@@ -375,23 +373,6 @@
     path = with pkgs; [ cloudflared ]; 
   };
 
-  systemd.services.qbit_tunnel = {
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = 10;
-      User = "cloudflared";
-      Group = "cloudflared";
-    };
-    script = ''
-     token=$(cat ${config.age.secrets.cloudflaredqbit.path})
-     cloudflared tunnel --no-autoupdate run --token=$token
-    '';
-    path = with pkgs; [ cloudflared ]; 
-  };
-
   services.nginx.enable = true;
 
   services.nginx.virtualHosts."_" = {
@@ -409,6 +390,20 @@
     '';
     locations."/".extraConfig = ''
        root /var/www/filebrowser;
+    '';
+  };
+
+  services.nginx.virtualHosts."__" = {
+    forceSSL = false;
+    listen = [{port = 8082;  addr="127.0.0.1"; ssl=false;}];
+    locations."/syncthing".extraConfig = ''
+      proxy_set_header        Host localhost;
+      proxy_set_header        Referer  http://syncthing:8384;
+      proxy_set_header        X-Real-IP $remote_addr;
+      proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header        X-Forwarded-Proto $scheme;
+      proxy_pass              http://localhost:8384/;
+      add_header X-Content-Type-Options "nosniff";
     '';
   };
 
