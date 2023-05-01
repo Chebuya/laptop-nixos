@@ -45,7 +45,7 @@
   boot.loader.efi.efiSysMountPoint = "/boot/efi";
 
   boot.initrd.secrets = {
-    "/crypto_keyfile.bin" = null;
+#    "/crypto_keyfile.bin" = null;
   };
 
   networking = {
@@ -73,6 +73,10 @@
     firejail = {
       source = "${pkgs.firejail.out}/bin/firejail";
     };
+  };
+  security.pam.services = {
+    login.u2fAuth = true;
+    sudo.u2fAuth = true;
   };
 
   users.users.chebuya = {
@@ -116,6 +120,8 @@
   services.haste-server.enable = true;
   services.rsyslogd.enable = true;
   services.tailscale.enable = true;
+  services.yubikey-agent.enable = true;
+  services.pcscd.enable = true;   
   services.flatpak.enable = true;
   programs.firejail.enable = true; 
   programs.command-not-found.enable = false;
@@ -128,6 +134,10 @@
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   environment.systemPackages = with pkgs; [
+    yubikey-manager-qt
+    yubikey-manager
+    yubioath-flutter
+    yubico-pam
     firejail
     xfce.xfce4-weather-plugin
     xfce.xfce4-mailwatch-plugin

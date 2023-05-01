@@ -8,9 +8,17 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "usbhid" ];
+  boot.kernelParams = ["quiet"];
+  boot.initrd.availableKernelModules = [ "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
+  boot.initrd.luks = {
+    yubikeySupport = true;
+    devices."cryptroot" = {
+      device = "/dev/nvme0n1p2";
+      yubikey.storage.device = "/dev/nvme0n1p1";
+    };
+  };
+  boot.kernelModules = [ "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];
   boot.extraModulePackages = [ ];
   hardware.bluetooth.enable = true;
 
@@ -18,8 +26,6 @@
     { device = "/dev/disk/by-uuid/f650daf8-6b92-4a0b-83d7-94b64d4dd189";
       fsType = "ext4";
     };
-
-  boot.initrd.luks.devices."luks-f1f0c68c-61f9-4901-8142-06e9ede6d607".device = "/dev/disk/by-uuid/f1f0c68c-61f9-4901-8142-06e9ede6d607";
 
   fileSystems."/boot/efi" =
     { device = "/dev/disk/by-uuid/58B4-7151";

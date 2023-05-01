@@ -169,10 +169,9 @@ in {
  #  };
 
   home.pointerCursor = {
-    gtk.enable = true;
     package = pkgs.gnome.gnome-themes-extra;
     name = "Adwaita";
-    size = 24;
+    size = 48;
     x11.enable = true;
   };
 
@@ -180,7 +179,7 @@ in {
 
   xresources.properties = {
     "Xcursor.theme" = "Adwaita";
-    "Xcursor.size"  = 24;
+    "Xcursor.size"  = 48;
   };
 
   #qt = {
@@ -194,24 +193,4 @@ in {
   home.file = {
     #".gtkrc-2.0".source = ../../config/dracula/gtk-2.0/gtkrc-2.0;
   };
-
-  #gtk = {
-  #  enable = true;
-
-  #  gtk2.configLocation = "${config.xdg.configHome}/gtk-2.0/gtkrc";
-    
-  #  gtk2.extraConfig = ''
-  #    gtk-cursor-theme-name="Adwaita"
-  #    gtk-cursor-theme-size="24";
-  #  '';
-  #  gtk3.extraConfig = {
-  #    "gtk-cursor-theme-name" = "Adwaita";
-  #    "gtk-cursor-theme-size" = 24;
-  #  };
-  # 
-  #  iconTheme = {
-  #    name = "Papirus-Dark";
-  #    package = pkgs.papirus-icon-theme;
-  #  };
-  #};
 }
