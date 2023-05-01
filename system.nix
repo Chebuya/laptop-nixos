@@ -36,7 +36,7 @@
     group = "users";
   };
 
-  age.identityPaths = [ "/home/chebuya/.ssh/id_ed25519" ];
+  age.identityPaths = [ "/home/chebuya/.ssh/.agenix/id_ed25519" ];
 
   nix.settings.experimental-features = [ "flakes" "nix-command" ];
 
@@ -116,12 +116,23 @@
     openFirewall = false;
     listenAddresses = [ { addr = "100.77.100.24"; port = 22; } { addr = "127.0.0.1"; port = 22; } ];
   };
+  
+  services.udev.extraRules = ''
+    SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1050", ACTION=="remove", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
+  '';
 
+  services.udev.packages = [ pkgs.yubikey-personalization ];
+
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
+    pinentryFlavor = "curses";
+  };
+ 
   services.haste-server.enable = true;
   services.rsyslogd.enable = true;
   services.tailscale.enable = true;
   services.yubikey-agent.enable = true;
-  services.pcscd.enable = true;   
   services.flatpak.enable = true;
   programs.firejail.enable = true; 
   programs.command-not-found.enable = false;
@@ -134,6 +145,12 @@
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   environment.systemPackages = with pkgs; [
+    pinentry
+    pcsctools
+    yubikey-personalization
+    yubikey-personalization-gui
+    yubico-piv-tool
+    yubikey-touch-detector
     yubikey-manager-qt
     yubikey-manager
     yubioath-flutter
@@ -152,6 +169,20 @@
     inputs.agenix.packages.x86_64-linux.default 
     inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
    ];
+
+  environment.etc."yubinotify" = {
+    mode = "0555";
+    text = ''
+      #!/bin/sh
+
+      ${pkgs.yubikey-touch-detector}/bin/yubikey-touch-detector -stdout | while read line; do
+      if [[ $line == U2F_1* ]]; then
+        ${pkgs.libnotify}/bin/notify-send "YubiKey" "Waiting for touch..." --icon=fingerprint -t 8000
+      fi
+       
+      done
+    '';
+  };
 
   hardware.opengl.driSupport32Bit = true;
   programs.steam.enable = true;
@@ -209,6 +240,20 @@
     };
     path = with pkgs; [ syncthing ];
     script = ''syncthing'';
+  };
+
+  systemd.services.yubinotify = {
+    enable = true;
+    description = "yubinotify";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="chebuya";
+      Type="simple";
+      ExecStart="/etc/yubinotify";
+      Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus";
+    };
   };
 
   users.users.qbit = {
