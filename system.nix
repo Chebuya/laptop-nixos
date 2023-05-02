@@ -144,6 +144,7 @@
     any-nix-shell
     pinentry
     pcsctools
+    linuxPackages.usbip
     yubikey-personalization
     yubikey-personalization-gui
     yubico-piv-tool

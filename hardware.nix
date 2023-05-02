@@ -19,7 +19,7 @@
     };
   };
   boot.kernelModules = [ "usbip" "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];
-  boot.extraModulePackages = with pkgs; [ linuxKernel.packages.linux_zen.usbip ];
+  boot.extraModulePackages = [ config.boot.kernelPackages.usbip.out ];
   boot.kernelPackages = pkgs.linuxPackages_zen;
   hardware.bluetooth.enable = true;
 
