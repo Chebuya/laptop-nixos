@@ -18,8 +18,9 @@
       yubikey.storage.device = "/dev/nvme0n1p1";
     };
   };
-  boot.kernelModules = [ "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];
-  boot.extraModulePackages = [ ];
+  boot.kernelModules = [ "usbip" "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];
+  boot.extraModulePackages = with pkgs; [ linuxKernel.packages.linux_zen.usbip ];
+  boot.kernelPackages = pkgs.linuxPackages_zen;
   hardware.bluetooth.enable = true;
 
   fileSystems."/" =
