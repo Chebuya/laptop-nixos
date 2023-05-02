@@ -145,6 +145,7 @@
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   environment.systemPackages = with pkgs; [
+    any-nix-shell
     pinentry
     pcsctools
     yubikey-personalization
