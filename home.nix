@@ -48,6 +48,7 @@ in {
     inetutils
     gocryptfs
     kitty
+    networkmanagerapplet
     any-nix-shell
     fish
     git
@@ -121,7 +122,7 @@ in {
     gnome.gnome-boxes
     xdg-utils
     discord-canary
-    #tdesktop
+    tdesktop
     (callPackage ./derivations/audiorelay.nix {})
   ];
 

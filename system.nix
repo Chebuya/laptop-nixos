@@ -117,10 +117,6 @@
     listenAddresses = [ { addr = "100.77.100.24"; port = 22; } { addr = "127.0.0.1"; port = 22; } ];
   };
   
-  services.udev.extraRules = ''
-    SUBSYSTEM=="hidraw", ATTRS{idVendor}=="1050", ACTION=="remove", RUN+="${pkgs.systemd}/bin/systemctl poweroff"
-  '';
-
   services.udev.packages = [ pkgs.yubikey-personalization ];
 
   programs.gnupg.agent = {
@@ -166,7 +162,7 @@
     traceroute
     pavucontrol
     pasystray
-    stable.tdesktop
+    #stable.tdesktop
     inputs.agenix.packages.x86_64-linux.default 
     inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
    ];
@@ -255,6 +251,7 @@
       ExecStart="/etc/yubinotify";
       Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus";
     };
+    path = with pkgs; [ gnupg ];
   };
 
   users.users.qbit = {
