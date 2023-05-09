@@ -35,6 +35,7 @@ in {
 #      });
 #    })
 #  ];
+ 
 
   home.packages = with pkgs; [
     imagemagick
@@ -128,9 +129,8 @@ in {
 
   programs.vscode = {
     enable = true;
-    package = pkgs.vscode.fhsWithPackages (ps: with ps; [ rustup zlib openssl.dev pkg-config ]);
     extensions = with pkgs.vscode-extensions; [
-      ms-vscode.cpptools
+      matklad.rust-analyzer
     ];
   };
 

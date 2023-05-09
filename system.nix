@@ -141,6 +141,7 @@
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   environment.systemPackages = with pkgs; [
+    (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
     any-nix-shell
     pinentry
     pcsctools
@@ -163,6 +164,7 @@
     traceroute
     pavucontrol
     pasystray
+    google-chrome
     #stable.tdesktop
     inputs.agenix.packages.x86_64-linux.default 
     inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
