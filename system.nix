@@ -12,6 +12,12 @@
     group = "shadowsocks";
   };
 
+  age.secrets.ssturkey = {
+    file = ./secrets/ssturkey.age;
+    owner = "shadowsocks";
+    group = "shadowsocks";
+  };
+
   age.secrets.cloudflarednginx = {
     file = ./secrets/cloudflarednginx.age;
     owner = "cloudflared";
@@ -35,6 +41,13 @@
     owner = "chebuya";
     group = "users";
   };
+
+  age.secrets.blogrs = {
+    file = ./secrets/blogrs.age;
+    owner = "chebuya";
+    group = "users";
+  };
+
 
   age.identityPaths = [ "/home/chebuya/.ssh/.agenix/id_ed25519" ];
 
@@ -82,7 +95,7 @@
   users.users.chebuya = {
     isNormalUser = true;
     description = "Chebuya";
-    extraGroups = [ "networkmanager" "wheel" "audio" ];
+    extraGroups = [ "networkmanager" "wheel" "audio" "libvirtd" ];
   };
   
   nixpkgs.config.allowUnfree = true;
@@ -109,6 +122,7 @@
       enable = true;
       dockerCompat = true;
     };
+    libvirtd.enable = true;
   };
 
   services.openssh = {
@@ -202,14 +216,16 @@
       ipv6_servers = true;
       require_dnssec = true;
 
-      sources.public-resolvers = {
-        urls = [
-          "https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md"
-          "https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md"
-        ];
-        cache_file = "/var/lib/dnscrypt-proxy2/public-resolvers.md";
-        minisign_key = "RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3";
-      };
+#      sources.public-resolvers = {
+#        urls = [
+#          "https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md"
+#          "https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md"
+#        ];
+#        cache_file = "/var/lib/dnscrypt-proxy2/public-resolvers.md";
+#        minisign_key = "RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3";
+#      };
+
+      server_names = [ "cloudflare" ];
     };
   };
 
@@ -329,11 +345,40 @@
         -s "fin.dreamykafe.tech" \
         -p 443 \
         -l 1081 \
-        -b 127.0.0.1 \
+        -b 0.0.0.0 \
         -k $password \
         -m "xchacha20-ietf-poly1305" \
         --plugin "v2ray-plugin" \
         --plugin-opts "tls;host=fin.dreamykafe.tech;path=/socks;loglevel=debug" \ 
+        -t 300 \
+        --reuse-port \
+        --fast-open
+    '';
+    path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
+  };
+
+  
+  systemd.services.turkeyshadowsocks = { 
+    enable = true;
+    description = "Shadowsocks";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="shadowsocks";
+      Group="shadowsocks";
+    };
+    script = ''
+     password=$(cat "${config.age.secrets.ssturkey.path}") 
+     ss-local \
+        -s "002847.xyz" \
+        -p 443 \
+        -l 1082 \
+        -b 127.0.0.1 \
+        -k $password \
+        -m "xchacha20-ietf-poly1305" \
+        --plugin "v2ray-plugin" \
+        --plugin-opts "tls;host=socks.002847.xyz;path=/;loglevel=debug" \ 
         -t 300 \
         --reuse-port \
         --fast-open
@@ -399,6 +444,7 @@
   };
 
   services.nginx.enable = true;
+  services.nginx.additionalModules = [ pkgs.nginxModules.pam ];
 
   services.nginx.virtualHosts."_" = {
     forceSSL = false;
@@ -415,6 +461,14 @@
     '';
     locations."/".extraConfig = ''
        root /var/www/filebrowser;
+    '';
+    locations."/haste/".extraConfig = ''
+      proxy_set_header        Host $host;
+      proxy_set_header        X-Real-IP $remote_addr;
+      proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header        X-Forwarded-Proto $scheme;
+      proxy_pass              http://localhost:7777/;
+      add_header X-Content-Type-Options "nosniff";
     '';
   };
 
@@ -438,11 +492,12 @@
       add_header X-Content-Type-Options "nosniff";
     '';
     locations."/qbittorrent/".extraConfig = ''
-      proxy_set_header        Host $host;
-      proxy_set_header        X-Real-IP $remote_addr;
-      proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header        X-Forwarded-Proto $scheme;
+      proxy_http_version      1.1;
+      proxy_set_header        Host localhost:4780;
+      proxy_set_header        X-Forwarded-Host   $http_host;
+      proxy_set_header        X-Forwarded-For    $remote_addr;
       proxy_pass              http://localhost:4780/;
+      proxy_cookie_path       /                  "/; Secure";
       add_header X-Content-Type-Options "nosniff";
     '';
   };
@@ -467,6 +522,7 @@
     ProtectHome = lib.mkForce "read-only";
   };
 
+  security.pam.services.nginx.setEnvironment = false;
   services.nginx.appendHttpConfig = ''
     disable_symlinks off;
   '';

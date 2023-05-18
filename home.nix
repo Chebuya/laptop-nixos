@@ -112,6 +112,7 @@ in {
     neofetch
     krita
     gcolor3
+    gcc
     wineWowPackages.stable
     winetricks
     github-desktop
@@ -120,7 +121,7 @@ in {
     shadowsocks-libev
     shadowsocks-v2ray-plugin
     gnome.geary
-    gnome.gnome-boxes
+    virt-manager
     xdg-utils
     discord-canary
     tdesktop

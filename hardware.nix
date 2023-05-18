@@ -33,6 +33,11 @@
       fsType = "vfat";
     };
 
+ swapDevices = [ {
+   device = "/var/lib/swapfile";
+   size = 8*1024;
+ } ];
+
   swapDevices = [ ];
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
