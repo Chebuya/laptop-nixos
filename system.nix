@@ -1,4 +1,5 @@
 { stable, inputs, config, pkgs, lib, ...}:
+
 {
   age.secrets.sssweden = {
     file = ./secrets/sssweden.age;
@@ -47,7 +48,6 @@
     owner = "chebuya";
     group = "users";
   };
-
 
   age.identityPaths = [ "/home/chebuya/.ssh/.agenix/id_ed25519" ];
 
@@ -156,6 +156,7 @@
 
   environment.systemPackages = with pkgs; [
     (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
+    davinci-resolve    
     any-nix-shell
     pinentry
     pcsctools
