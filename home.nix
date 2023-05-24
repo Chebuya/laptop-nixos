@@ -22,24 +22,11 @@ in {
   nixpkgs.config.allowUnfree = true;
   home.username = "chebuya";
   home.stateVersion = "22.11";
-
-  #services.picom.enable = true;
-  #services.picom.vSync = true;
-  
   services.kdeconnect.enable = true;
-
-#  nixpkgs.overlays = [
-#    (self: super: {
-#      waybar = super.waybar.overrideAttrs (oldAttrs: {
-#        mesonFlags = oldAttrs.mesonFlags ++ [ "-Dexperimental=true" ];
-#      });
-#    })
-#  ];
- 
 
   home.packages = with pkgs; [
     imagemagick
-    glances
+    apostrophe
     nmap
     cloudflared
     htop
@@ -47,80 +34,46 @@ in {
     lsof
     dnsutils
     inetutils
-    gocryptfs
     kitty
     networkmanagerapplet
     any-nix-shell
     fish
     git
-#    gnomeExtensions.clipboard-indicator
-#    gnomeExtensions.unblank
-#    gnomeExtensions.unite
-#    gnomeExtensions.dash-to-dock
-#    gnomeExtensions.appindicator
-#    gnomeExtensions.gsconnect
-    python3
-#    grim
-#    ayu-theme-gtk
     inotify-tools
     noto-fonts
     noto-fonts-cjk
     noto-fonts-emoji
-#    cantarell-fonts
-#    font-awesome
-#    lxqt.lxqt-qtplugin
-#    libsForQt5.qtstyleplugin-kvantum
-    pulseaudio
-#    kdeconnect
-#    wl-clipboard 
-#    slurp
-    alacritty
-#    fuzzel
-#    ripcord
-#    kitty
     imagemagick
     libsixel
     libnotify
-#    mako
-#    hyprpaper
     weechat
-    graphviz
     mpv
     util-linux
-#    waybar
     prismlauncher
     lutris
     steam-run
     android-studio
     android-tools
     monero-gui
-#    mailspring
     gnome.zenity
     libreoffice
     lrzsz
     chromium
-    syncthingtray
     inkscape
     obs-studio
-    openjdk17
     distrobox
-    rustup
     dropbox
     wireguard-tools
     lua5_4
     autossh
     neofetch
     krita
-    gcolor3
-    gcc
-    wineWowPackages.stable
     winetricks
     github-desktop
     tor-browser-bundle-bin
     papirus-icon-theme
     shadowsocks-libev
     shadowsocks-v2ray-plugin
-    gnome.geary
     virt-manager
     xdg-utils
     discord-canary
@@ -151,48 +104,5 @@ in {
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
-
-    gtk3.extraConfig = {
-      Settings = ''
-        gtk-application-prefer-dark-theme=1
-      '';
-    };
-
-    gtk4.extraConfig = {
-      Settings = ''
-        gtk-application-prefer-dark-theme=1
-      '';
-    };
-  };
-
- # home.sessionVariables = {
- #   GTK_THEME = "Adwaita:dark";
- #   GTK_USE_PORTAL = "1";
- #  };
-
-  home.pointerCursor = {
-    package = pkgs.gnome.gnome-themes-extra;
-    name = "Adwaita";
-    size = 48;
-    x11.enable = true;
-  };
-
-  #fonts.fontconfig.enable = true;
-
-  xresources.properties = {
-    "Xcursor.theme" = "Adwaita";
-    "Xcursor.size"  = 48;
-  };
-
-  #qt = {
-  #  enable = true;
-  #  platformTheme = "gtk";
-  #  style = {
-  #    package = pkgs.ayu-theme-gtk;
-  #  };
-  #};
-
-  home.file = {
-    #".gtkrc-2.0".source = ../../config/dracula/gtk-2.0/gtkrc-2.0;
   };
 }

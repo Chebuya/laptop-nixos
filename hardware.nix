@@ -10,7 +10,7 @@
 
   boot.kernelParams = ["quiet"];
   boot.initrd.availableKernelModules = [ "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];
-  boot.initrd.kernelModules = [ ];
+  boot.initrd.kernelModules = [ "amdgpu" ];
   boot.initrd.luks = {
     yubikeySupport = true;
     devices."cryptroot" = {
@@ -37,6 +37,17 @@
     device = "/var/lib/swapfile";
     size = 8*1024;
   } ];
+
+  hardware.opengl.enable = true;
+  hardware.opengl.extraPackages = with pkgs; [
+    rocm-opencl-icd
+    rocm-opencl-runtime
+    mesa.drivers
+    amdvlk
+  ];
+
+  hardware.opengl.driSupport = true;
+  hardware.opengl.driSupport32Bit = true;
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's

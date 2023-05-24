@@ -1,6 +1,10 @@
 { stable, inputs, config, pkgs, lib, ...}:
 
 {
+  nixpkgs.config.permittedInsecurePackages = [
+#    "openssl-1.1.1t"
+  ];
+  
   age.secrets.sssweden = {
     file = ./secrets/sssweden.age;
     owner = "shadowsocks";
@@ -49,6 +53,12 @@
     group = "users";
   };
 
+  age.secrets.blogrs_webhook = {
+     file = ./secrets/blogrs_webhook.age;
+     owner = "chebuya";
+     group = "users";
+  };
+
   age.identityPaths = [ "/home/chebuya/.ssh/.agenix/id_ed25519" ];
 
   nix.settings.experimental-features = [ "flakes" "nix-command" ];
@@ -95,7 +105,7 @@
   users.users.chebuya = {
     isNormalUser = true;
     description = "Chebuya";
-    extraGroups = [ "networkmanager" "wheel" "audio" "libvirtd" ];
+    extraGroups = [ "networkmanager" "wheel" "audio" "libvirtd" "wireshark" ];
   };
   
   nixpkgs.config.allowUnfree = true;
@@ -106,6 +116,7 @@
       xterm.enable = false;
       xfce.enable = true;
     };
+    videoDrivers = [ "amdgpu" ];
     displayManager.defaultSession = "xfce";
     config = ''
       section "OutputClass"
@@ -144,6 +155,7 @@
   services.tailscale.enable = true;
   services.yubikey-agent.enable = true;
   services.flatpak.enable = true;
+  programs.wireshark.enable = true;
   programs.firejail.enable = true; 
   programs.command-not-found.enable = false;
   programs.fish.promptInit = ''
@@ -155,34 +167,32 @@
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   environment.systemPackages = with pkgs; [
-    (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
-    davinci-resolve    
-    any-nix-shell
-    pinentry
-    pcsctools
-    linuxPackages.usbip
-    yubikey-personalization
-    yubikey-personalization-gui
-    yubico-piv-tool
-    yubikey-touch-detector
-    yubikey-manager-qt
-    yubikey-manager
-    yubioath-flutter
-    yubico-pam
-    firejail
-    xfce.xfce4-weather-plugin
-    xfce.xfce4-mailwatch-plugin
-    xfce.thunar-dropbox-plugin
-    xfce.thunar-archive-plugin
-    xfce.xfce4-xkb-plugin
-    xfce.xfce4-clipman-plugin
-    traceroute
-    pavucontrol
-    pasystray
-    google-chrome
-    #stable.tdesktop
-    inputs.agenix.packages.x86_64-linux.default 
-    inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
+#    (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
+#    any-nix-shell
+#    pinentry
+#    pcsctools
+#    linuxPackages.usbip
+#    yubioath-flutter
+#    yubikey-personalization
+#    yubikey-personalization-gui
+#    yubico-piv-tool
+#    yubikey-touch-detector
+#    yubikey-manager-qt
+#    yubikey-manager
+#    yubico-pam
+#    firejail
+#    xfce.xfce4-weather-plugin
+#    xfce.xfce4-mailwatch-plugin
+#    xfce.thunar-dropbox-plugin
+#    xfce.thunar-archive-plugin
+#    xfce.xfce4-xkb-plugin
+#    xfce.xfce4-clipman-plugin
+ #   traceroute
+ #   pavucontrol
+ #   pasystray
+ #   google-chrome
+ #   inputs.agenix.packages.x86_64-linux.default 
+ #   inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
    ];
 
   environment.etc."yubinotify" = {
@@ -216,16 +226,6 @@
     settings = {
       ipv6_servers = true;
       require_dnssec = true;
-
-#      sources.public-resolvers = {
-#        urls = [
-#          "https://raw.githubusercontent.com/DNSCrypt/dnscrypt-resolvers/master/v3/public-resolvers.md"
-#          "https://download.dnscrypt.info/resolvers-list/v3/public-resolvers.md"
-#        ];
-#        cache_file = "/var/lib/dnscrypt-proxy2/public-resolvers.md";
-#        minisign_key = "RWQf6LRCGA9i53mlYecO4IzT51TGPpvWucNSCh1CBM0QTaLn73Y7GFO3";
-#      };
-
       server_names = [ "cloudflare" ];
     };
   };

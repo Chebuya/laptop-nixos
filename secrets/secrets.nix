@@ -10,4 +10,5 @@ in {
   "cloudflaredssh.age".publicKeys = [ chebuya ];
   "precise.age".publicKeys = [ chebuya ];
   "blogrs.age".publicKeys = [ chebuya ];
+  "blogrs_webhook.age".publicKeys = [ chebuya ];
 }
