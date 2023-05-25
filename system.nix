@@ -4,7 +4,7 @@
   nixpkgs.config.permittedInsecurePackages = [
 #    "openssl-1.1.1t"
   ];
-  
+
   age.secrets.sssweden = {
     file = ./secrets/sssweden.age;
     owner = "shadowsocks";
@@ -108,7 +108,6 @@
     extraGroups = [ "networkmanager" "wheel" "audio" "libvirtd" "wireshark" ];
   };
   
-  nixpkgs.config.allowUnfree = true;
   system.stateVersion = "22.11";
   services.xserver = {
     enable = true;
@@ -167,32 +166,33 @@
   xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
 
   environment.systemPackages = with pkgs; [
-#    (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
-#    any-nix-shell
-#    pinentry
-#    pcsctools
-#    linuxPackages.usbip
-#    yubioath-flutter
-#    yubikey-personalization
-#    yubikey-personalization-gui
-#    yubico-piv-tool
-#    yubikey-touch-detector
-#    yubikey-manager-qt
-#    yubikey-manager
-#    yubico-pam
-#    firejail
-#    xfce.xfce4-weather-plugin
-#    xfce.xfce4-mailwatch-plugin
-#    xfce.thunar-dropbox-plugin
-#    xfce.thunar-archive-plugin
-#    xfce.xfce4-xkb-plugin
-#    xfce.xfce4-clipman-plugin
- #   traceroute
- #   pavucontrol
- #   pasystray
- #   google-chrome
- #   inputs.agenix.packages.x86_64-linux.default 
- #   inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
+    (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
+    any-nix-shell
+    pinentry
+    stable.quartus-prime-lite
+    pcsctools
+    linuxPackages.usbip
+    yubioath-flutter
+    yubikey-personalization
+    yubikey-personalization-gui
+    yubico-piv-tool
+    yubikey-touch-detector
+    yubikey-manager-qt
+    yubikey-manager
+    yubico-pam
+    firejail
+    xfce.xfce4-weather-plugin
+    xfce.xfce4-mailwatch-plugin
+    xfce.thunar-dropbox-plugin
+    xfce.thunar-archive-plugin
+    xfce.xfce4-xkb-plugin
+    xfce.xfce4-clipman-plugin
+    traceroute
+    pavucontrol
+    pasystray
+    google-chrome
+    inputs.agenix.packages.x86_64-linux.default 
+    inputs.firefox.packages.${pkgs.system}.firefox-nightly-bin
    ];
 
   environment.etc."yubinotify" = {

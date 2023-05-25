@@ -25,6 +25,9 @@ in {
   services.kdeconnect.enable = true;
 
   home.packages = with pkgs; [
+    rustup
+    nodePackages.wrangler
+    nodejs
     imagemagick
     apostrophe
     nmap
@@ -61,7 +64,6 @@ in {
     chromium
     inkscape
     obs-studio
-    distrobox
     dropbox
     wireguard-tools
     lua5_4
@@ -69,13 +71,11 @@ in {
     neofetch
     krita
     winetricks
-    github-desktop
     tor-browser-bundle-bin
     papirus-icon-theme
     shadowsocks-libev
     shadowsocks-v2ray-plugin
     virt-manager
-    xdg-utils
     discord-canary
     tdesktop
     (callPackage ./derivations/audiorelay.nix {})

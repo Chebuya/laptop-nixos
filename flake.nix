@@ -21,9 +21,11 @@
         home-manager.nixosModules.home-manager
         agenix.nixosModules.default
         { 
+          nixpkgs-stable.config.allowUnfree = true;
+          nixpkgs.config.allowUnfree = true;
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
-#          home-manager.users.chebuya = import ./home.nix;        
+          home-manager.users.chebuya = import ./home.nix;        
         }
       ];
     };
