@@ -324,7 +324,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig = { Restart = "always"; RestartSec = "5"; User="shadowsocks"; Group="shadowsocks"; };
     script = ''
-     password=$(cat "${config.age.secrets.sssweden.path}")
+     password=$(cat "${config.age.secrets.ssmoldova.path}")
      domain="moldova"$(cat "${config.age.secrets.ssdomain.path}") 
      ss-local -s $domain -p 443 -l 1081 -b 127.0.0.1 -k $password -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;loglevel=none;host="$domain
     '';
@@ -337,7 +337,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig = { Restart = "always"; RestartSec = "5"; User="shadowsocks"; Group="shadowsocks"; };
     script = ''
-     password=$(cat "${config.age.secrets.sssweden.path}")
+     password=$(cat "${config.age.secrets.ssfinland.path}")
      domain="finland"$(cat "${config.age.secrets.ssdomain.path}") 
      ss-local -s $domain -p 443 -l 1082 -b 127.0.0.1 -k $password -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;loglevel=none;host="$domain
     '';
@@ -350,7 +350,7 @@
     wantedBy = [ "multi-user.target" ];
     serviceConfig = { Restart = "always"; RestartSec = "5"; User="shadowsocks"; Group="shadowsocks"; };
     script = ''
-     password=$(cat "${config.age.secrets.sssweden.path}")
+     password=$(cat "${config.age.secrets.ssturkey.path}")
      domain="turkey"$(cat "${config.age.secrets.ssdomain.path}") 
      ss-local -s $domain -p 443 -l 1083 -b 127.0.0.1 -k $password -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;loglevel=none;host="$domain
     '';
