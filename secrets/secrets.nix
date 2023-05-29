@@ -5,9 +5,8 @@ in {
   "ssfinland.age".publicKeys = [ chebuya ];
   "ssturkey.age".publicKeys = [ chebuya ];
   "ssmoldova.age".publicKeys = [ chebuya ];
-  "cloudflaredinternal.age".publicKeys = [ chebuya ];
-  "cloudflarednginx.age".publicKeys = [ chebuya ];
-  "cloudflaredssh.age".publicKeys = [ chebuya ];
+  "ssdomain.age".publicKeys = [ chebuya ];
+  "cloudflared.age".publicKeys = [ chebuya ];
   "precise.age".publicKeys = [ chebuya ];
   "blogrs.age".publicKeys = [ chebuya ];
   "blogrs_webhook.age".publicKeys = [ chebuya ];

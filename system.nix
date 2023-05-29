@@ -4,59 +4,18 @@
   nixpkgs.config.permittedInsecurePackages = [
 #    "openssl-1.1.1t"
   ];
+  nixpkgs.config.allowUnfree = true;
 
-  age.secrets.sssweden = {
-    file = ./secrets/sssweden.age;
-    owner = "shadowsocks";
-    group = "shadowsocks";
-  };
-
-  age.secrets.ssfinland = {
-    file = ./secrets/ssfinland.age;
-    owner = "shadowsocks";
-    group = "shadowsocks";
-  };
-
-  age.secrets.ssturkey = {
-    file = ./secrets/ssturkey.age;
-    owner = "shadowsocks";
-    group = "shadowsocks";
-  };
-
-  age.secrets.cloudflarednginx = {
-    file = ./secrets/cloudflarednginx.age;
-    owner = "cloudflared";
-    group = "cloudflared";
-  };
-
-  age.secrets.cloudflaredinternal = {
-    file = ./secrets/cloudflaredinternal.age;
-    owner = "cloudflared";
-    group = "cloudflared";
-  };
-
-  age.secrets.cloudflaredssh = {
-    file = ./secrets/cloudflaredssh.age;
-    owner = "cloudflared";
-    group = "cloudflared";
-  };
-
-  age.secrets.precise = {
-    file = ./secrets/precise.age;
-    owner = "chebuya";
-    group = "users";
-  };
-
-  age.secrets.blogrs = {
-    file = ./secrets/blogrs.age;
-    owner = "chebuya";
-    group = "users";
-  };
-
-  age.secrets.blogrs_webhook = {
-     file = ./secrets/blogrs_webhook.age;
-     owner = "chebuya";
-     group = "users";
+  age.secrets = {
+    sssweden = { file = ./secrets/sssweden.age; owner = "shadowsocks"; group = "shadowsocks"; };
+    ssturkey = { file = ./secrets/ssturkey.age; owner = "shadowsocks"; group = "shadowsocks"; };
+    ssfinland = { file = ./secrets/ssfinland.age; owner = "shadowsocks"; group = "shadowsocks"; };
+    ssmoldova = { file = ./secrets/ssmoldova.age; owner = "shadowsocks"; group = "shadowsocks"; };
+    ssdomain = { file = ./secrets/ssdomain.age; owner = "shadowsocks"; group = "shadowsocks"; };
+    cloudflared = { file = ./secrets/cloudflared.age; owner = "cloudflared"; group = "cloudflared"; };
+    precise = { file = ./secrets/precise.age; owner = "chebuya"; group = "users"; };
+    blogrs = { file = ./secrets/blogrs.age; owner = "chebuya"; group = "users"; };
+    blogrs_webhook = { file = ./secrets/blogrs_webhook.age; owner = "chebuya"; group = "users"; };
   };
 
   age.identityPaths = [ "/home/chebuya/.ssh/.agenix/id_ed25519" ];
@@ -149,8 +108,6 @@
     pinentryFlavor = "curses";
   };
  
-  services.haste-server.enable = true;
-  services.rsyslogd.enable = true;
   services.tailscale.enable = true;
   services.yubikey-agent.enable = true;
   services.flatpak.enable = true;
@@ -169,7 +126,7 @@
     (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
     any-nix-shell
     pinentry
-    stable.quartus-prime-lite
+    quartus-prime-lite
     pcsctools
     linuxPackages.usbip
     yubioath-flutter
@@ -209,6 +166,24 @@
     '';
   };
 
+  environment.etc."batterynotify" = {
+    mode = "0555";
+    text = ''
+       #!/bin/sh
+
+    while :
+    do
+       battery=$(cat /sys/class/power_supply/BAT0/capacity)
+       if [ "$battery" -lt 15 ]; then 
+        curl -d "Low battery" ntfy.sh/Laptop_hnw19r # please, do not abuse that, i'm too lazy to put it in agenix.
+       fi
+       sleep 600
+    done
+    '';
+  };
+
+  services.printing.enable = true;
+  services.printing.drivers = with pkgs; [ foo2zjs fxlinuxprint ];
   hardware.opengl.driSupport32Bit = true;
   programs.steam.enable = true;
 
@@ -274,6 +249,34 @@
     path = with pkgs; [ gnupg ];
   };
 
+  systemd.services.loginnotify = {
+    enable = false;
+    description = "loginnotify";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="chebuya";
+      Type="simple";
+    };
+    script = ''journalctl -f | grep --line-buffered "session opened" | xargs -I{} curl -d "Login detected" ntfy.sh/Laptop_hnw19r'';
+    path = with pkgs; [ curl ];
+  };
+
+  systemd.services.batterynotify = {
+    enable = true;
+    description = "batterynotify";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="chebuya";
+      Type="simple";
+      Exec="/etc/batterynotify";
+    };
+    path = with pkgs; [ curl ];
+  };
+
   users.users.qbit = {
     group = "users";
     isSystemUser = true;
@@ -306,83 +309,50 @@
     enable = true;
     description = "Shadowsocks";
     wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5";
-      User="shadowsocks";
-      Group="shadowsocks";
-    };
+    serviceConfig = { Restart = "always"; RestartSec = "5"; User="shadowsocks"; Group="shadowsocks"; };
     script = ''
-     password=$(cat "${config.age.secrets.sssweden.path}") 
-     ss-local \
-        -s "dreamykafe.tech" \
-        -p 443 \
-        -l 1080 \
-        -b 127.0.0.1 \
-        -k $password \
-        -m "xchacha20-ietf-poly1305" \
-        --plugin "v2ray-plugin" \
-        --plugin-opts "tls;host=saltythunderingslugsached.dreamykafe.tech;path=/;loglevel=debug" \ 
-        -t 300 \
-        --reuse-port \
-        --fast-open
+     password=$(cat "${config.age.secrets.sssweden.path}")
+     domain="sweden"$(cat "${config.age.secrets.ssdomain.path}") 
+     ss-local -s $domain -p 443 -l 1080 -b 127.0.0.1 -k $password -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;loglevel=none;host="$domain
     '';
     path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
   };
 
-  systemd.services.finlandshadowsocks = { 
+  systemd.services.moldovashadowsocks = {
     enable = true;
     description = "Shadowsocks";
     wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5";
-      User="shadowsocks";
-      Group="shadowsocks";
-    };
+    serviceConfig = { Restart = "always"; RestartSec = "5"; User="shadowsocks"; Group="shadowsocks"; };
     script = ''
-     password=$(cat "${config.age.secrets.ssfinland.path}") 
-     ss-local \
-        -s "fin.dreamykafe.tech" \
-        -p 443 \
-        -l 1081 \
-        -b 0.0.0.0 \
-        -k $password \
-        -m "xchacha20-ietf-poly1305" \
-        --plugin "v2ray-plugin" \
-        --plugin-opts "tls;host=fin.dreamykafe.tech;path=/socks;loglevel=debug" \ 
-        -t 300 \
-        --reuse-port \
-        --fast-open
+     password=$(cat "${config.age.secrets.sssweden.path}")
+     domain="moldova"$(cat "${config.age.secrets.ssdomain.path}") 
+     ss-local -s $domain -p 443 -l 1081 -b 127.0.0.1 -k $password -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;loglevel=none;host="$domain
     '';
     path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
   };
 
-  
-  systemd.services.turkeyshadowsocks = { 
+  systemd.services.finlandshadowsocks = {
     enable = true;
     description = "Shadowsocks";
     wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = "5";
-      User="shadowsocks";
-      Group="shadowsocks";
-    };
+    serviceConfig = { Restart = "always"; RestartSec = "5"; User="shadowsocks"; Group="shadowsocks"; };
     script = ''
-     password=$(cat "${config.age.secrets.ssturkey.path}") 
-     ss-local \
-        -s "002847.xyz" \
-        -p 443 \
-        -l 1082 \
-        -b 127.0.0.1 \
-        -k $password \
-        -m "xchacha20-ietf-poly1305" \
-        --plugin "v2ray-plugin" \
-        --plugin-opts "tls;host=socks.002847.xyz;path=/;loglevel=debug" \ 
-        -t 300 \
-        --reuse-port \
-        --fast-open
+     password=$(cat "${config.age.secrets.sssweden.path}")
+     domain="finland"$(cat "${config.age.secrets.ssdomain.path}") 
+     ss-local -s $domain -p 443 -l 1082 -b 127.0.0.1 -k $password -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;loglevel=none;host="$domain
+    '';
+    path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
+  };
+
+  systemd.services.turkeyshadowsocks = {
+    enable = true;
+    description = "Shadowsocks";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = { Restart = "always"; RestartSec = "5"; User="shadowsocks"; Group="shadowsocks"; };
+    script = ''
+     password=$(cat "${config.age.secrets.sssweden.path}")
+     domain="turkey"$(cat "${config.age.secrets.ssdomain.path}") 
+     ss-local -s $domain -p 443 -l 1083 -b 127.0.0.1 -k $password -m "xchacha20-ietf-poly1305" --plugin "v2ray-plugin" --plugin-opts "tls;loglevel=none;host="$domain
     '';
     path = with pkgs; [ shadowsocks-libev shadowsocks-v2ray-plugin ];
   };
@@ -393,7 +363,7 @@
   };
   users.groups.cloudflared = {};
 
-  systemd.services.ssh_tunnel = {
+  systemd.services.cloudflared = {
     wantedBy = [ "multi-user.target" ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
@@ -404,48 +374,13 @@
       Group = "cloudflared";
     };
     script = ''
-     token=$(cat ${config.age.secrets.cloudflaredssh.path})
-     cloudflared tunnel --no-autoupdate run --token=$token
-    '';
-    path = with pkgs; [ cloudflared ]; 
-  };
-
-  systemd.services.internal_tunnel = {
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = 10;
-      User = "cloudflared";
-      Group = "cloudflared";
-    };
-    script = ''
-     token=$(cat ${config.age.secrets.cloudflaredinternal.path})
-     cloudflared tunnel --no-autoupdate run --token=$token
-    '';
-    path = with pkgs; [ cloudflared ]; 
-  };
-
-  systemd.services.nginx_tunnel = {
-    wantedBy = [ "multi-user.target" ];
-    after = [ "network-online.target" ];
-    wants = [ "network-online.target" ];
-    serviceConfig = {
-      Restart = "always";
-      RestartSec = 10;
-      User = "cloudflared";
-      Group = "cloudflared";
-    };
-    script = ''
-     token=$(cat ${config.age.secrets.cloudflarednginx.path})
+     token=$(cat ${config.age.secrets.cloudflared.path})
      cloudflared tunnel --no-autoupdate run --token=$token
     '';
     path = with pkgs; [ cloudflared ]; 
   };
 
   services.nginx.enable = true;
-  services.nginx.additionalModules = [ pkgs.nginxModules.pam ];
 
   services.nginx.virtualHosts."_" = {
     forceSSL = false;
@@ -462,14 +397,6 @@
     '';
     locations."/".extraConfig = ''
        root /var/www/filebrowser;
-    '';
-    locations."/haste/".extraConfig = ''
-      proxy_set_header        Host $host;
-      proxy_set_header        X-Real-IP $remote_addr;
-      proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-      proxy_set_header        X-Forwarded-Proto $scheme;
-      proxy_pass              http://localhost:7777/;
-      add_header X-Content-Type-Options "nosniff";
     '';
   };
 
@@ -502,29 +429,4 @@
       add_header X-Content-Type-Options "nosniff";
     '';
   };
-
-  systemd.services.nginx.serviceConfig = {
-    SupplementaryGroups = [ "shadow" ];
-    NoNewPrivileges = lib.mkForce false;
-    PrivateDevices = lib.mkForce false;
-    ProtectHostname = lib.mkForce false;
-    ProtectKernelTunables = lib.mkForce false;
-    ProtectKernelModules = lib.mkForce false;
-    RestrictAddressFamilies = lib.mkForce [ ];
-    LockPersonality = lib.mkForce false;
-    MemoryDenyWriteExecute = lib.mkForce false;
-    RestrictRealtime = lib.mkForce false;
-    RestrictSUIDSGID = lib.mkForce false;
-    SystemCallArchitectures = lib.mkForce "";
-    ProtectClock = lib.mkForce false;
-    ProtectKernelLogs = lib.mkForce false;
-    RestrictNamespaces = lib.mkForce false;
-    SystemCallFilter = lib.mkForce "";
-    ProtectHome = lib.mkForce "read-only";
-  };
-
-  security.pam.services.nginx.setEnvironment = false;
-  services.nginx.appendHttpConfig = ''
-    disable_symlinks off;
-  '';
 }
