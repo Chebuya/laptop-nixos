@@ -102,7 +102,9 @@
   
   services.udev.packages = [ pkgs.yubikey-personalization ];
   services.udev.extraRules = ''
-    SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6010", MODE="0666" # altera usb blaster
+    BUS=="usb", SYSFS{idVendor}=="09fb", SYSFS{idProduct}=="6010", MODE="0666"
+    BUS=="usb", SYSFS{idVendor}=="09fb", SYSFS{idProduct}=="6810", MODE="0666"
+    BUS=="usb", SYSFS{idVendor}=="09fb", SYSFS{idProduct}=="6001", MODE="0666"
   '';
 
   programs.gnupg.agent = {
