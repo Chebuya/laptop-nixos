@@ -101,6 +101,9 @@
   };
   
   services.udev.packages = [ pkgs.yubikey-personalization ];
+  services.udev.extraRules = ''
+    SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6010", MODE="0666" # altera usb blaster
+  '';
 
   programs.gnupg.agent = {
     enable = true;
@@ -126,6 +129,9 @@
     (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
     any-nix-shell
     pinentry
+    virtiofsd
+    openjfx11
+    openjdk11
     quartus-prime-lite
     pcsctools
     linuxPackages.usbip
@@ -189,8 +195,8 @@
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 8081 59100 34844 8888 4780 ];
-    allowedUDPPorts = [ 61385 59100 59200 64083 8888 ];
+    allowedTCPPorts = [ 59100 ];
+    allowedUDPPorts = [ 61385 59100 59200 64083 ];
     allowedTCPPortRanges = [ { from = 1714; to = 1764; } ];
     allowedUDPPortRanges = [ { from = 1714; to = 1764; } ];
     checkReversePath = "loose";
@@ -382,9 +388,9 @@
 
   services.nginx.enable = true;
 
-  services.nginx.virtualHosts."_" = {
+  services.nginx.virtualHosts."laptop" = {
     forceSSL = false;
-    listen = [{port = 8081;  addr="0.0.0.0"; ssl=false;}];
+    listen = [{port = 8081;  addr="127.0.0.1"; ssl=false;}];
     root = "/var/www/";
     extraConfig = "index  index.html index.htm;";
     locations."/files/".extraConfig = ''
@@ -400,7 +406,7 @@
     '';
   };
 
-  services.nginx.virtualHosts."__" = {
+  services.nginx.virtualHosts."internal" = {
     forceSSL = false;
     listen = [{port = 8082;  addr="127.0.0.1"; ssl=false;}];
     locations."/".extraConfig = ''

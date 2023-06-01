@@ -26,7 +26,6 @@ in {
 
   home.packages = with pkgs; [
     rustup
-    nodePackages.wrangler
     nodejs
     imagemagick
     apostrophe
@@ -53,6 +52,7 @@ in {
     mpv
     util-linux
     prismlauncher
+    distrobox
     lutris
     steam-run
     android-studio
