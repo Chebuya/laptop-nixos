@@ -12,10 +12,10 @@
   boot.initrd.availableKernelModules = [ "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];
   boot.initrd.kernelModules = [ "amdgpu" ];
   boot.initrd.luks = {
-    yubikeySupport = true;
+    yubikeySupport = false;
     devices."cryptroot" = {
       device = "/dev/nvme0n1p2";
-      yubikey.storage.device = "/dev/nvme0n1p1";
+#      yubikey.storage.device = "/dev/nvme0n1p1";
     };
   };
   boot.kernelModules = [ "usbip" "kvm-amd" "vfat" "nls_cp437" "nls_iso8859-1" "usbhid" "nvme" "xhci_pci" ];

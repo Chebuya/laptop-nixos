@@ -18,7 +18,7 @@
     blogrs_webhook = { file = ./secrets/blogrs_webhook.age; owner = "chebuya"; group = "users"; };
   };
 
-  age.identityPaths = [ "/home/chebuya/.ssh/.agenix/id_ed25519" ];
+  age.identityPaths = [ "/home/chebuya/.ssh/id_ed25519" ];
 
   nix.settings.experimental-features = [ "flakes" "nix-command" ];
 
@@ -29,6 +29,8 @@
   boot.initrd.secrets = {
 #    "/crypto_keyfile.bin" = null;
   };
+
+  security.sudo.wheelNeedsPassword = false;
 
   networking = {
     nameservers = [ "127.0.0.1" "::1" ];
@@ -102,9 +104,14 @@
   
   services.udev.packages = [ pkgs.yubikey-personalization ];
   services.udev.extraRules = ''
-    BUS=="usb", SYSFS{idVendor}=="09fb", SYSFS{idProduct}=="6010", MODE="0666"
-    BUS=="usb", SYSFS{idVendor}=="09fb", SYSFS{idProduct}=="6810", MODE="0666"
-    BUS=="usb", SYSFS{idVendor}=="09fb", SYSFS{idProduct}=="6001", MODE="0666"
+    # USB-Blaster
+    SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6001", MODE="0666", GROUP="plugdev"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6002", MODE="0666", GROUP="plugdev"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6003", MODE="0666", GROUP="plugdev"
+
+    # USB-Blaster II
+    SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6010", MODE="0666", GROUP="plugdev"
+    SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6810", MODE="0666", GROUP="plugdev"
   '';
 
   programs.gnupg.agent = {
@@ -130,6 +137,8 @@
   environment.systemPackages = with pkgs; [
     (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
     any-nix-shell
+    xorg.xinit
+    tigervnc
     pinentry
     virtiofsd
     openjfx11
@@ -255,6 +264,21 @@
       Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus";
     };
     path = with pkgs; [ gnupg ];
+   };
+
+  systemd.services.vnc = {
+    enable = false;
+    description = "vnc";
+    wantedBy = [ "multi-user.target" ];
+    serviceConfig = {
+      Restart = "always";
+      RestartSec = "5";
+      User="chebuya";
+      Type="simple";
+      ExecStart="vncserver";
+      Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus";
+    };
+    path = with pkgs; [ tigervnc ];
   };
 
   systemd.services.loginnotify = {
@@ -280,9 +304,9 @@
       RestartSec = "5";
       User="chebuya";
       Type="simple";
-      Exec="/etc/batterynotify";
     };
     path = with pkgs; [ curl ];
+    script = ''/bin/sh /etc/batterynotify ''; 
   };
 
   users.users.qbit = {
