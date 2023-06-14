@@ -2,10 +2,10 @@
 
 pkgs.stdenv.mkDerivation rec {
   name = "audio-relay";
-  version = "0.26.3";
+  version = "0.27.5";
 
   src = builtins.fetchurl {
-    url = "https://dl.audiorelay.net/setups/linux/audiorelay-0.26.3.tar.gz";
+    url = "https://dl.audiorelay.net/setups/linux/audiorelay-0.27.5.tar.gz";
     sha256 = "sha256:05553s1gp9bimr79nvagdk0l8ahmbwkqg6i6csavvzw40kisj49r";
   };
 
