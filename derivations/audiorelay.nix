@@ -2,10 +2,10 @@
 
 pkgs.stdenv.mkDerivation rec {
   name = "audio-relay";
-  version = "0.27.5";
+  version = "0.26.3";
 
   src = builtins.fetchurl {
-    url = "https://dl.audiorelay.net/setups/linux/audiorelay-0.27.5.tar.gz";
+    url = "https://dl.audiorelay.net/setups/linux/audiorelay-0.26.3.tar.gz";
     sha256 = "sha256:05553s1gp9bimr79nvagdk0l8ahmbwkqg6i6csavvzw40kisj49r";
   };
 
@@ -15,6 +15,7 @@ pkgs.stdenv.mkDerivation rec {
   ];
 
   buildInputs = with pkgs; [
+    jdk
     alsaLib
     file
     fontconfig.lib
@@ -39,7 +40,7 @@ pkgs.stdenv.mkDerivation rec {
       $out/bin \
       $out/lib/runtime/lib/jexec \
       $out/lib/runtime/lib/jspawnhelper \
-      $(find "$out/lib/runtime/lib" -type f -name 'lib*.so' -a -not -name 'libj*.so')
+      #$(find "$out/lib/runtime/lib" -type f -name 'lib*.so' -a -not -name 'libj*.so')
       wrapProgram $out/bin/AudioRelay \
         --prefix LD_LIBRARY_PATH : $out/lib/runtime/lib/ \
         --prefix LD_LIBRARY_PATH : ${pkgs.alsaLib}/lib/ \
