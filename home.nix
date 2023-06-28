@@ -25,6 +25,11 @@ in {
   services.kdeconnect.enable = true;
 
   home.packages = with pkgs; [
+    qtox
+    librewolf
+    unzip
+    zip
+    wget
     rustup
     nodejs
     imagemagick

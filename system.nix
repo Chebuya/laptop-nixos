@@ -1,4 +1,4 @@
-{ stable, inputs, config, pkgs, lib, ...}:
+{ test, stable, inputs, config, pkgs, lib, ...}:
 
 {
   nixpkgs.config.permittedInsecurePackages = [
@@ -136,7 +136,8 @@
 
   environment.systemPackages = with pkgs; [
     (pkgs.writeShellScriptBin "google-chrome" "exec -a $0 ${google-chrome}/bin/google-chrome-stable $@")
-    any-nix-shell
+    test.nodePackages.wrangler
+    any-nix-shell  
     xorg.xinit
     tigervnc
     pinentry
@@ -237,6 +238,7 @@
   '';
 
   services.ttyd.enable = true;
+  systemd.services.NetworkManager-wait-online.enable = false;
 
   systemd.services.syncthing = {
     enable = true;
